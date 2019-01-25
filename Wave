@@ -1,0 +1,82 @@
+package s1.demo
+
+import s1.image.ImageExtensions._
+import java.awt.Color
+import java.awt.BasicStroke
+import scala.util.Random
+import scala.collection.mutable.Buffer
+import scala.math._
+
+object Pulsating extends Effect(500,500) {
+ 
+  
+  //Represents a square
+  class Square(val x: Int, val y: Int, val side: Int, var opacity: Int)
+  
+  class Circle(val x: Int, val y: Int, var diameter: Int)
+  
+  var clock = 0
+  val squares = Buffer[Square]()
+  val circles = Buffer[Circle]()
+  
+  //Creates a new squares
+  def createSquares(): Unit = {
+    for {
+      x <- 0 until this.width by 2
+      y <- 0 until this.height by 2
+    } {
+      squares += new Square(x, y, 2, 255) 
+    }
+  }
+  
+  createSquares()
+  
+  val x0 = this.width/2
+  val y0 = this.height/2
+  
+  val smallCircle = new Circle(x0, y0, -100)
+  val bigCircle = new Circle(x0, y0, 0)
+  circles += smallCircle; circles += bigCircle
+  
+  
+  
+  def makePic = {
+    
+    val emptyImg = emptyImage
+    val graphics = emptyImg.graphics
+    
+    //Makes the background
+    graphics.setColor(Color.BLUE)
+    graphics.fillRect(0, 0, 500, 500)
+    
+    //Makes the squares
+    for (square <- squares) {
+      graphics.setColor(new Color(255,127,84, max(min(square.opacity, 255), 0)))
+      graphics.fillRect(square.x, square.y, square.side, square.side)
+    }
+    
+    
+    emptyImg
+  }
+  
+  def distance(x: Int, y: Int) = sqrt( pow(x-x0, 2) + pow(y-x0, 2) ).toInt
+  
+  def changeThings = {
+    
+    val r = smallCircle.diameter/2
+    val R = bigCircle.diameter/2
+    
+    //Scales the coefficient of the wave particle between 0 and 1
+    def scaleWave(x: Int, y: Int) = (cos( ((distance(x,y)-r).toDouble/(R-r)) *2*Pi) + 1)/2
+
+    squares.foreach(_.opacity = 255)
+    val squaresInRing = squares.filter(square => distance(square.x, square.y) < R && distance(square.x, square.y) > r)
+    squaresInRing.foreach(square => square.opacity = ((scaleWave(square.x, square.y)*255)).toInt)
+    
+    smallCircle.diameter += 2
+    bigCircle.diameter += 2
+    clock += 1
+  }
+  
+  def next = clock > 750 
+}
