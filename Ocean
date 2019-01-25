@@ -1,0 +1,98 @@
+package s1.demo
+
+import s1.image.ImageExtensions._
+import java.awt.Color
+import java.awt.BasicStroke
+import scala.util.Random
+import scala.collection.mutable.Buffer
+import scala.math._
+import javax.imageio.ImageIO
+import java.io.File
+import s1.sound._
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
+
+
+object Ocean extends Effect(1920,1080) {
+  
+  val bubbleImage = ImageIO.read(new File("pictures/OceanDemoBubble2.png"))
+  val otto = ImageIO.read(new File("pictures/OttooooDemoIlmanTaustaaPNG.png"))
+  var bubbles = Buffer[Bubble]()
+  var otot = Buffer[Otto]()
+  var bubbleImages = Buffer[java.awt.Image]()
+  var clock = 0
+  val future = Future
+  
+  //represents a bubble
+  class Bubble(var x: Int, var y: Int, val diameter: Int) {
+    
+    val scaledImage = bubbleImages(diameter - 1)
+  }
+  
+  
+  class Otto(var x: Int, var y: Int, val speed: Int, val diameter: Int) {
+    val scaledImage = otto.getScaledInstance(diameter, diameter, java.awt.Image.SCALE_SMOOTH)
+  }
+  
+  
+  //currently useles method for creating bubbles with a method
+  def createBubbles: Unit = {
+    for (iteration <- 0 until 10) {
+      bubbles += new Bubble(Random.nextInt(this.width), this.height + 100,  Random.nextInt(100) + 1)
+    }
+  }
+  
+  
+  //Creates the bubble images in advance to make it lag less
+  def createBubbleImages(maxSize: Int): Unit = {
+    for (diameter <- 1 to maxSize) {
+      bubbleImages += bubbleImage.getScaledInstance(diameter, diameter, java.awt.Image.SCALE_SMOOTH)
+    }
+  }
+    
+  //Runs the method: I could just write
+  this.createBubbleImages(100)
+  
+   def makePic()= {
+    
+    val emptyImg = ImageIO.read(new File("pictures/OceanDemoPic.png"))
+    val graphics = emptyImg.graphics
+    otot.foreach(bubble => graphics.drawImage(bubble.scaledImage, bubble.x, bubble.y, null))
+    bubbles.foreach(bubble => graphics.drawImage(bubble.scaledImage, bubble.x, bubble.y, null))
+    
+    emptyImg
+  }
+  
+  
+    def changeThings() = {
+    
+    bubbles.foreach(bubble => {
+    bubble.y -= bubble.diameter/5 + 1
+    })
+    
+    otot.foreach(otto => {
+      otto.x -= otto.speed
+    })
+    
+    for(iteration  <- 0 until 1) {
+      bubbles += new Bubble(Random.nextInt(this.width), this.height + 80,  Random.nextInt(80) + 1)
+    }
+    
+    if (clock == 75) {
+      otot += new Otto(this.width + 100, this.height/2, 40, 80)
+      otot += new Otto(this.width + 125, this.height/2 + 100, 40, 20)
+      otot += new Otto(this.width + 160, this.height/2 - 10 + 100, 40, 20)
+    }
+    
+    clock += 1
+    
+    bubbles = bubbles.filter(bubble => bubble.y > -bubble.diameter)
+    
+    if (clock == 1 ) Future(s1.sound.play(StereoSound.load("samples/Aquarium.wav")))
+  }
+  
+    
+  def next = clock > 200
+  
+  
+}
