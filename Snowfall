@@ -1,0 +1,59 @@
+package s1.demo
+
+import s1.image.ImageExtensions._
+import java.awt.Color
+import java.awt.BasicStroke
+import scala.util.Random
+import scala.collection.mutable.Buffer
+
+
+object Starry extends Effect(500, 500) {
+  
+  class Star(var x: Int, var y: Int, val xSpeed: Int, val size: Int)
+  
+  val stars = Buffer[Star]()
+  
+//  for(coord <- 0 to 500 by 50) {
+//    flakes += new Snowflake(0, coord, 5, 0)
+//  }
+  
+//  override def mouseAt(x: Int, y: Int) = flakes += new Snowflake(y,x,5,0)
+  
+  val random = new Random
+  var clock = 0
+  def starSize = random.nextInt(10) + 1
+  
+
+  def makePic()= {
+    
+    val emptyImg = emptyImage
+    val graphics = emptyImg.graphics
+    val flakeColor = Color.WHITE
+    graphics.setColor(Color.BLACK)
+    graphics.fillRect(0, 0, 500, 500)
+    graphics.setColor(flakeColor)
+    stars.foreach(star => graphics.fillOval(star.y, star.x, star.size, star.size))
+    
+    
+    emptyImg
+  }
+  
+  
+  def changeThings() = {
+    
+    stars.foreach(star => {
+    star.x += star.size/3 + 1
+    })
+    
+    clock += 1
+    
+    for(iteration  <- 0 until 6) {
+      stars += new Star(-50, random.nextInt(500), 5, starSize)
+    }
+  }
+  
+  stars.filter(star => star.y < this.height + star.size)
+  
+  
+  def next = clock > 10000
+}
